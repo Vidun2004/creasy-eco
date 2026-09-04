@@ -1,56 +1,96 @@
-import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius } from '../theme/tokens';
+import { useRef, useState } from "react";
+import {
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from "react-native";
+import { colors, typography, spacing, radius } from "../theme/tokens";
+import { supabase } from "../lib/supabase";
 
-export default function LoginScreen({ navigation }: any) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+export default function LoginScreen() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
+
+  async function handleLogin() {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Login failed", error.message);
+    }
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sign in</Text>
-
-      <Text style={styles.label}>Username</Text>
-      <TextInput
-        style={styles.input}
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="none"
-        placeholder="e.g. j.silva"
-        placeholderTextColor={colors.gray}
-      />
-
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        placeholder="••••••••"
-        placeholderTextColor={colors.gray}
-      />
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.replace('PlantSelection')}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.buttonText}>LOG IN</Text>
-      </TouchableOpacity>
-    </View>
+        <Text style={styles.title}>Sign in</Text>
+
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          placeholder="you@company.com"
+          placeholderTextColor={colors.gray}
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          blurOnSubmit={false}
+        />
+
+        <Text style={styles.label}>Password</Text>
+        <TextInput
+          ref={passwordRef}
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholder="••••••••"
+          placeholderTextColor={colors.gray}
+          returnKeyType="done"
+        />
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? "SIGNING IN…" : "LOG IN"}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: colors.paper,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: spacing.lg,
   },
-  title: {
-    ...typography.h1,
-    marginBottom: spacing.xl,
-  },
+  title: { ...typography.h1, marginBottom: spacing.xl },
   label: {
     ...typography.label,
     marginBottom: spacing.xs,
@@ -70,12 +110,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.moss,
     borderRadius: radius.none,
     paddingVertical: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: spacing.xl,
   },
-  buttonText: {
-    color: colors.paper,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
+  buttonText: { color: colors.paper, fontWeight: "700", letterSpacing: 1 },
 });

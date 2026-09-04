@@ -1,13 +1,78 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Category {
+  WATER
+  ENERGY
+  WASTE
+  SOLAR_GENERATION
+}
+
+model Profile {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  fullName  String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+
+  plants   UserPlant[]
+  readings Reading[]   @relation("ReadingCreatedBy")
+}
+
+model Plant {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  users  UserPlant[]
+  meters Meter[]
+}
+
+model UserPlant {
+  userId  String
+  plantId String
+
+  user  Profile @relation(fields: [userId], references: [id])
+  plant Plant   @relation(fields: [plantId], references: [id])
+
+  @@id([userId, plantId])
+}
+
+model Meter {
+  id        String   @id @default(uuid())
+  plantId   String
+  category  Category
+  name      String
+  unit      String
+  qrCode    String   @unique
+  createdAt DateTime @default(now())
+
+  plant    Plant     @relation(fields: [plantId], references: [id])
+  readings Reading[]
+}
+
+model Reading {
+  id         String   @id @default(uuid())
+  meterId    String
+  value      Float
+  note       String?
+  recordedAt DateTime @default(now())
+  recordedBy String
+
+  meter          Meter   @relation(fields: [meterId], references: [id])
+  recordedByUser Profile @relation("ReadingCreatedBy", fields: [recordedBy], references: [id])
+
+  @@index([meterId, recordedAt])
 }
