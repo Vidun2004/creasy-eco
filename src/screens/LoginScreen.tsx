@@ -42,6 +42,9 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Sign in</Text>
+        <Text style={styles.subtitle}>
+          Welcome to Creasy Eco. Let's make a difference together.
+        </Text>
 
         <Text style={styles.label}>Email</Text>
         <TextInput
@@ -91,6 +94,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   title: { ...typography.h1, marginBottom: spacing.xl },
+  subtitle: {
+    ...typography.body,
+    color: colors.gray,
+    marginTop: -spacing.lg,
+    marginBottom: spacing.lg,
+  },
   label: {
     ...typography.label,
     marginBottom: spacing.xs,

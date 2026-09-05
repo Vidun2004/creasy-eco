@@ -2,36 +2,31 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, typography, spacing, radius } from "../theme/tokens";
 
-const CATEGORIES = [
-  { key: "WATER", label: "Water", icon: "water-outline" },
-  { key: "ENERGY", label: "Energy", icon: "flash-outline" },
-  { key: "WASTE", label: "Waste", icon: "trash-outline" },
-  { key: "SOLAR_GENERATION", label: "Solar Generation", icon: "sunny-outline" },
+const MENU_ITEMS = [
+  { key: "PlantManagement", label: "Plants", icon: "business-outline" },
+  { key: "UserManagement", label: "Users", icon: "people-outline" },
+  { key: "MeterManagement", label: "Meters", icon: "speedometer-outline" },
 ] as const;
 
-export default function CategorySelectionScreen({ route, navigation }: any) {
-  const plant = route.params?.plant;
-
+export default function AdminHubScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>{plant?.name ?? "Plant"}</Text>
-
+      <Text style={styles.header}>Admin Settings</Text>
       <View style={styles.list}>
-        {CATEGORIES.map((cat) => (
+        {MENU_ITEMS.map((item) => (
           <TouchableOpacity
-            key={cat.key}
+            key={item.key}
             style={styles.row}
-            onPress={() =>
-              navigation.navigate("CategoryMonthView", {
-                plant,
-                category: cat.key,
-              })
-            }
+            onPress={() => navigation.navigate(item.key)}
           >
             <View style={styles.iconBox}>
-              <Ionicons name={cat.icon as any} size={22} color={colors.paper} />
+              <Ionicons
+                name={item.icon as any}
+                size={22}
+                color={colors.paper}
+              />
             </View>
-            <Text style={styles.rowLabel}>{cat.label}</Text>
+            <Text style={styles.rowLabel}>{item.label}</Text>
             <Ionicons name="chevron-forward" size={20} color={colors.gray} />
           </TouchableOpacity>
         ))}

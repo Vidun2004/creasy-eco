@@ -8,22 +8,41 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { colors, typography, spacing, radius } from "../theme/tokens";
 import { supabase } from "../lib/supabase";
-
-const MOCK_PLANTS = [
-  { id: "1", name: "Sterling Steels" },
-  { id: "2", name: "Lanka Special Steels" },
-  { id: "3", name: "Home Care Gonawala" },
-  { id: "4", name: "Laxapana" },
-  { id: "5", name: "Home Care Homagama" },
-  { id: "6", name: "CDL" },
-];
+import { usePlants } from "../hooks/usePlants";
+import { useProfile } from "../hooks/useProfile";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function PlantSelectionScreen({ navigation }: any) {
+  const { data: plants, isLoading, isError } = usePlants();
+  const { data: profile } = useProfile();
+
+  if (isLoading) return <LoadingSpinner />;
+
+  if (isError) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>
+          Couldn't load plants. Pull to retry soon.
+        </Text>
+      </View>
+    );
+  }
+
+  if (!plants || plants.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>
+          No plants assigned to your account yet.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Select a Plant</Text>
       <FlatList
-        data={MOCK_PLANTS}
+        data={plants}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: spacing.xxl }}
         renderItem={({ item }) => (
@@ -39,12 +58,14 @@ export default function PlantSelectionScreen({ navigation }: any) {
         )}
       />
 
-      <TouchableOpacity
-        style={styles.logoutFab}
-        onPress={() => supabase.auth.signOut()}
-      >
-        <Ionicons name="log-out-outline" size={24} color={colors.paper} />
-      </TouchableOpacity>
+      {profile?.role === "USER" && (
+        <TouchableOpacity
+          style={styles.logoutFab}
+          onPress={() => supabase.auth.signOut()}
+        >
+          <Ionicons name="log-out-outline" size={24} color={colors.paper} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -78,5 +99,17 @@ const styles = StyleSheet.create({
     borderRadius: radius.none,
     alignItems: "center",
     justifyContent: "center",
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.lg,
+    backgroundColor: colors.paper,
+  },
+  errorText: {
+    ...typography.body,
+    color: colors.gray,
+    textAlign: "center",
   },
 });
