@@ -4,6 +4,7 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, typography, spacing, radius } from "../theme/tokens";
@@ -41,6 +42,9 @@ export default function PlantSelectionScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Select a Plant</Text>
+      <Text style={styles.subHeader}>
+        {plants.length} plant(s) assigned to you
+      </Text>
       <FlatList
         data={plants}
         keyExtractor={(item) => item.id}
@@ -52,8 +56,13 @@ export default function PlantSelectionScreen({ navigation }: any) {
               navigation.navigate("CategorySelection", { plant: item })
             }
           >
-            <View style={styles.thumb} />
+            {item.imageUrl ? (
+              <Image source={{ uri: item.imageUrl }} style={styles.thumb} />
+            ) : (
+              <View style={styles.thumb} />
+            )}
             <Text style={styles.cardTitle}>{item.name}</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.gray} />
           </TouchableOpacity>
         )}
       />
@@ -72,7 +81,12 @@ export default function PlantSelectionScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paper, padding: spacing.lg },
-  header: { ...typography.h1, marginBottom: spacing.lg },
+  header: { ...typography.h1 },
+  subHeader: {
+    ...typography.label,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+  },
   card: {
     flexDirection: "row",
     alignItems: "center",
@@ -88,7 +102,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.moss,
     marginRight: spacing.md,
   },
-  cardTitle: { ...typography.h2 },
+  cardTitle: { ...typography.h2, flex: 1 },
   logoutFab: {
     position: "absolute",
     bottom: spacing.lg,

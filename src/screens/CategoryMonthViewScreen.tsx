@@ -42,12 +42,19 @@ export default function CategoryMonthViewScreen({ route, navigation }: any) {
     );
   }
 
-  const totalConsumption =
-    meters?.reduce((sum, m) => sum + (m.consumption ?? 0), 0) ?? 0;
+  // Distinguish "genuinely zero consumption" from "no prior-month reading to
+  // compare against" — summing nulls as 0 would silently hide the latter.
+  const metersWithData = meters?.filter((m) => m.consumption != null) ?? [];
+  const hasAnyData = metersWithData.length > 0;
+  const totalConsumption = metersWithData.reduce(
+    (sum, m) => sum + (m.consumption ?? 0),
+    0,
+  );
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{CATEGORY_LABELS[category] ?? category}</Text>
+      <Text style={styles.subHeader}>{plant.name}</Text>
 
       <View style={styles.monthNav}>
         <TouchableOpacity
@@ -73,8 +80,15 @@ export default function CategoryMonthViewScreen({ route, navigation }: any) {
       <View style={styles.summaryCard}>
         <Text style={styles.summaryLabel}>Total consumption</Text>
         <Text style={styles.summaryValue}>
-          {totalConsumption.toLocaleString()} {meters?.[0]?.unit ?? ""}
+          {hasAnyData
+            ? `${totalConsumption.toLocaleString()} ${meters?.find((m) => m.consumption != null)?.unit ?? ""}`
+            : "No data yet"}
         </Text>
+        {!hasAnyData && meters && meters.length > 0 && (
+          <Text style={styles.summarySub}>
+            Needs a prior month's reading to calculate
+          </Text>
+        )}
       </View>
 
       {isLoading ? (
@@ -100,6 +114,13 @@ export default function CategoryMonthViewScreen({ route, navigation }: any) {
                 })
               }
             >
+              <View style={styles.meterIconBox}>
+                <Ionicons
+                  name="speedometer-outline"
+                  size={18}
+                  color={colors.paper}
+                />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.meterName}>{item.meter_name}</Text>
                 <Text style={styles.meterSub}>
@@ -118,13 +139,25 @@ export default function CategoryMonthViewScreen({ route, navigation }: any) {
           }
         />
       )}
+
+      <TouchableOpacity
+        style={styles.qrFab}
+        onPress={() => navigation.navigate("QrScanner")}
+      >
+        <Ionicons name="qr-code-outline" size={24} color={colors.paper} />
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.paper, padding: spacing.lg },
-  header: { ...typography.h1, marginBottom: spacing.md },
+  header: { ...typography.h1 },
+  subHeader: {
+    ...typography.label,
+    marginTop: spacing.xs,
+    marginBottom: spacing.md,
+  },
   monthNav: {
     flexDirection: "row",
     alignItems: "center",
@@ -148,6 +181,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginTop: spacing.xs,
   },
+  summarySub: { color: colors.gray, fontSize: 12, marginTop: spacing.xs },
   meterRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -158,6 +192,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     backgroundColor: colors.grayLight,
   },
+  meterIconBox: {
+    width: 36,
+    height: 36,
+    backgroundColor: colors.ink,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
+  },
   meterName: { ...typography.h2, fontSize: 16 },
   meterSub: { ...typography.body, color: colors.gray, marginTop: 2 },
   errorText: {
@@ -165,5 +207,16 @@ const styles = StyleSheet.create({
     color: colors.gray,
     textAlign: "center",
     marginTop: spacing.lg,
+  },
+  qrFab: {
+    position: "absolute",
+    bottom: spacing.lg,
+    left: spacing.lg,
+    backgroundColor: colors.moss,
+    width: 48,
+    height: 48,
+    borderRadius: radius.none,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

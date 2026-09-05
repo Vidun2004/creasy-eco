@@ -10,6 +10,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, typography, spacing, radius } from "../theme/tokens";
@@ -19,6 +20,7 @@ import {
   useUpdatePlant,
   useDeletePlant,
 } from "../hooks/usePlantMutations";
+import { usePickAndUploadPlantImage } from "../hooks/usePlantImageUpload";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function PlantManagementScreen() {
@@ -26,6 +28,7 @@ export default function PlantManagementScreen() {
   const createPlant = useCreatePlant();
   const updatePlant = useUpdatePlant();
   const deletePlant = useDeletePlant();
+  const uploadImage = usePickAndUploadPlantImage();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -89,7 +92,10 @@ export default function PlantManagementScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.header}>Plants</Text>
+        <View>
+          <Text style={styles.header}>Plants</Text>
+          <Text style={styles.subHeader}>{plants?.length ?? 0} total</Text>
+        </View>
         <TouchableOpacity style={styles.addButton} onPress={openCreateModal}>
           <Ionicons name="add" size={20} color={colors.paper} />
         </TouchableOpacity>
@@ -101,13 +107,29 @@ export default function PlantManagementScreen() {
         renderItem={({ item }) => (
           <View style={styles.row}>
             <TouchableOpacity
-              style={{ flex: 1 }}
+              style={styles.rowContent}
               onPress={() => openEditModal(item)}
             >
-              <Text style={styles.rowTitle}>{item.name}</Text>
-              {item.description ? (
-                <Text style={styles.rowSub}>{item.description}</Text>
-              ) : null}
+              <View style={styles.iconBox}>
+                {item.imageUrl ? (
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.thumbImage}
+                  />
+                ) : (
+                  <Ionicons
+                    name="business-outline"
+                    size={20}
+                    color={colors.paper}
+                  />
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.rowTitle}>{item.name}</Text>
+                <Text style={styles.rowSub}>
+                  {item.description || "No description"}
+                </Text>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => handleDelete(item)}
@@ -117,6 +139,11 @@ export default function PlantManagementScreen() {
             </TouchableOpacity>
           </View>
         )}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            No plants yet — tap + to add your first one.
+          </Text>
+        }
       />
 
       <Modal visible={modalVisible} animationType="slide" transparent>
@@ -147,6 +174,34 @@ export default function PlantManagementScreen() {
               placeholder="Short description"
               placeholderTextColor={colors.gray}
             />
+
+            {editingId && (
+              <>
+                <Text style={styles.label}>Photo</Text>
+                <TouchableOpacity
+                  style={styles.imagePickerButton}
+                  onPress={() =>
+                    uploadImage.mutate(editingId, {
+                      onError: (err: any) =>
+                        Alert.alert(
+                          "Upload failed",
+                          err.message ?? "Unknown error",
+                        ),
+                    })
+                  }
+                  disabled={uploadImage.isPending}
+                >
+                  <Ionicons
+                    name="camera-outline"
+                    size={18}
+                    color={colors.ink}
+                  />
+                  <Text style={styles.imagePickerText}>
+                    {uploadImage.isPending ? "Uploading…" : "Choose Photo"}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
 
             <View style={styles.modalButtonRow}>
               <TouchableOpacity
@@ -182,6 +237,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   header: { ...typography.h1 },
+  subHeader: { ...typography.label, marginTop: spacing.xs },
   addButton: {
     backgroundColor: colors.moss,
     width: 40,
@@ -199,9 +255,31 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     backgroundColor: colors.grayLight,
   },
+  rowContent: { flex: 1, flexDirection: "row", alignItems: "center" },
+  iconBox: {
+    width: 40,
+    height: 40,
+    backgroundColor: colors.ink,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
+    overflow: "hidden",
+  },
+  thumbImage: { width: 40, height: 40 },
   rowTitle: { ...typography.h2, fontSize: 16 },
-  rowSub: { ...typography.body, color: colors.gray, marginTop: 2 },
+  rowSub: {
+    ...typography.body,
+    color: colors.gray,
+    fontSize: 12,
+    marginTop: 2,
+  },
   deleteButton: { padding: spacing.sm },
+  emptyText: {
+    ...typography.body,
+    color: colors.gray,
+    textAlign: "center",
+    marginTop: spacing.lg,
+  },
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -224,6 +302,17 @@ const styles = StyleSheet.create({
     color: colors.ink,
     backgroundColor: colors.grayLight,
   },
+  imagePickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.xs,
+  },
+  imagePickerText: { color: colors.ink, fontWeight: "600" },
   modalButtonRow: {
     flexDirection: "row",
     gap: spacing.sm,

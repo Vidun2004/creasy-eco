@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import {
+  View,
   Text,
   TextInput,
   TouchableOpacity,
@@ -8,7 +9,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { colors, typography, spacing, radius } from "../theme/tokens";
 import { supabase } from "../lib/supabase";
 
@@ -41,6 +44,12 @@ export default function LoginScreen() {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
+        <Image
+          source={require("../../assets/images/logo_bgr.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+
         <Text style={styles.title}>Sign in</Text>
         <Text style={styles.subtitle}>
           Welcome to Creasy Eco. Let's make a difference together.
@@ -92,12 +101,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
     justifyContent: "center",
     paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
-  title: { ...typography.h1, marginBottom: spacing.xl },
+  logo: {
+    width: 72,
+    height: 72,
+    marginBottom: spacing.xxl,
+    alignSelf: "center",
+  },
+  title: { ...typography.h1, marginBottom: spacing.xs },
   subtitle: {
     ...typography.body,
     color: colors.gray,
-    marginTop: -spacing.lg,
     marginBottom: spacing.lg,
   },
   label: {

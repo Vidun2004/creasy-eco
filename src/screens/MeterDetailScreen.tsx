@@ -50,11 +50,8 @@ export default function MeterDetailScreen({ route }: any) {
   const latest = history?.[0];
 
   function computeRecordedAt(): Date {
-    if (isCurrentMonth) return new Date(); // real "right now" timestamp
+    if (isCurrentMonth) return new Date();
 
-    // Backdated month: keep the current day-of-month/time-of-day, but shift
-    // into the viewed month, clamped so it can't overflow into the next one
-    // (e.g. viewing Feb while it's the 30th today).
     const daysInTargetMonth = new Date(
       monthDate.getFullYear(),
       monthDate.getMonth() + 1,
@@ -170,7 +167,17 @@ export default function MeterDetailScreen({ route }: any) {
           style={styles.modalBackdrop}
         >
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Add Reading</Text>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Add Reading</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+                disabled={addReading.isPending}
+              >
+                <Ionicons name="close" size={22} color={colors.ink} />
+              </TouchableOpacity>
+            </View>
+
             {!isCurrentMonth && (
               <Text style={styles.backdatedNotice}>
                 This will be recorded for {monthLabel}, not today.
@@ -292,7 +299,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
     padding: spacing.lg,
   },
-  modalTitle: { ...typography.h2, marginBottom: spacing.md },
+  modalHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.md,
+  },
+  modalTitle: { ...typography.h2, flex: 1, marginRight: spacing.sm },
+  closeButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.grayLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   label: {
     ...typography.label,
     marginBottom: spacing.xs,

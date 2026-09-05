@@ -13,13 +13,36 @@ import CategoryMonthViewScreen from "../screens/CategoryMonthViewScreen";
 import MeterDetailScreen from "../screens/MeterDetailScreen";
 import AdminHubScreen from "../screens/AdminHubScreen";
 import PlantManagementScreen from "../screens/PlantManagementScreen";
+import UserManagementScreen from "../screens/UserManagementScreen";
+import MeterManagementPlantScreen from "../screens/MeterManagementPlantScreen";
+import MeterManagementCategoryScreen from "../screens/MeterManagementCategoryScreen";
+import MeterManagementListScreen from "../screens/MeterManagementListScreen";
+import QrScannerScreen from "../screens/QrScannerScreen";
 import SplashScreen from "../screens/SplashScreen";
 
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
   const { session, loading } = useAuth();
-  const { data: profile, isLoading: profileLoading } = useProfile();
+  const {
+    data: profile,
+    isLoading: profileLoading,
+    isError: profileIsError,
+    error: profileErr,
+  } = useProfile();
+  console.log(
+    "DEBUG nav — session:",
+    !!session,
+    "authLoading:",
+    loading,
+    "profileLoading:",
+    profileLoading,
+    "profile:",
+    profile,
+    "profileError:",
+    profileIsError,
+    profileErr,
+  );
 
   if (DEV_FORCE_SPLASH || loading || (session && profileLoading)) {
     return <SplashScreen />;
@@ -80,6 +103,31 @@ export default function RootNavigator() {
               name="PlantManagement"
               component={PlantManagementScreen}
               options={{ title: "" }}
+            />
+            <Stack.Screen
+              name="UserManagement"
+              component={UserManagementScreen}
+              options={{ title: "" }}
+            />
+            <Stack.Screen
+              name="MeterManagementPlant"
+              component={MeterManagementPlantScreen}
+              options={{ title: "" }}
+            />
+            <Stack.Screen
+              name="MeterManagementCategory"
+              component={MeterManagementCategoryScreen}
+              options={{ title: "" }}
+            />
+            <Stack.Screen
+              name="MeterManagementList"
+              component={MeterManagementListScreen}
+              options={{ title: "" }}
+            />
+            <Stack.Screen
+              name="QrScanner"
+              component={QrScannerScreen}
+              options={{ headerShown: false }}
             />
           </>
         )}

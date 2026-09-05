@@ -19,23 +19,25 @@ const CATEGORIES = [
   },
 ] as const;
 
-export default function CategorySelectionScreen({ route, navigation }: any) {
+export default function MeterManagementCategoryScreen({
+  route,
+  navigation,
+}: any) {
   const plant = route.params?.plant;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>{plant?.name ?? "Plant"}</Text>
+      <Text style={styles.header}>{plant?.name}</Text>
       <Text style={styles.subHeader}>
-        Select a category to view or log data
+        Select a category to manage its meters
       </Text>
-
       <View style={styles.list}>
         {CATEGORIES.map((cat) => (
           <TouchableOpacity
             key={cat.key}
             style={styles.row}
             onPress={() =>
-              navigation.navigate("CategoryMonthView", {
+              navigation.navigate("MeterManagementList", {
                 plant,
                 category: cat.key,
               })
