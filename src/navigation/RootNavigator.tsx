@@ -24,25 +24,7 @@ const Stack = createNativeStackNavigator();
 
 export default function RootNavigator() {
   const { session, loading } = useAuth();
-  const {
-    data: profile,
-    isLoading: profileLoading,
-    isError: profileIsError,
-    error: profileErr,
-  } = useProfile();
-  console.log(
-    "DEBUG nav — session:",
-    !!session,
-    "authLoading:",
-    loading,
-    "profileLoading:",
-    profileLoading,
-    "profile:",
-    profile,
-    "profileError:",
-    profileIsError,
-    profileErr,
-  );
+  const { data: profile, isLoading: profileLoading } = useProfile();
 
   if (DEV_FORCE_SPLASH || loading || (session && profileLoading)) {
     return <SplashScreen />;

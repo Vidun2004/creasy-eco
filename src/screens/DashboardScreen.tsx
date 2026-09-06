@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   logoutFab: {
     position: "absolute",
-    bottom: spacing.lg,
+    bottom: spacing.xxxl,
     left: spacing.lg,
     backgroundColor: colors.ink,
     width: 48,

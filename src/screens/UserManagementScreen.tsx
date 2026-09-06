@@ -34,6 +34,9 @@ export default function UserManagementScreen() {
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [viewingDeletedUser, setViewingDeletedUser] = useState<any | null>(
+    null,
+  );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,6 +44,9 @@ export default function UserManagementScreen() {
 
   const [editRole, setEditRole] = useState<"ADMIN" | "USER">("USER");
   const [editPlantIds, setEditPlantIds] = useState<string[]>([]);
+
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleteReason, setDeleteReason] = useState("");
 
   function openCreateModal() {
     setEmail("");
@@ -64,6 +70,10 @@ export default function UserManagementScreen() {
   }
 
   function openEditModal(user: any) {
+    if (user.isDeleted) {
+      setViewingDeletedUser(user);
+      return;
+    }
     setEditingUser(user);
     setEditRole(user.role);
     setEditPlantIds(user.plants?.map((p: any) => p.plantId) ?? []);
@@ -92,22 +102,27 @@ export default function UserManagementScreen() {
     );
   }
 
-  function handleDelete(user: any) {
-    Alert.alert(
-      "Delete user",
-      `Permanently delete ${user.email}? This cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () =>
-            deleteUser.mutate(user.id, {
-              onSuccess: () => setEditingUser(null),
-              onError: (err: any) => Alert.alert("Delete failed", err.message),
-            }),
+  function openDeleteModal(user: any) {
+    setDeleteTarget(user);
+    setDeleteReason("");
+  }
+
+  function confirmDelete() {
+    if (!deleteTarget) return;
+    if (!deleteReason.trim()) {
+      Alert.alert("Reason required", "Please provide a reason for the record.");
+      return;
+    }
+
+    deleteUser.mutate(
+      { userId: deleteTarget.id, reason: deleteReason.trim() },
+      {
+        onSuccess: () => {
+          setDeleteTarget(null);
+          setEditingUser(null);
         },
-      ],
+        onError: (err: any) => Alert.alert("Delete failed", err.message),
+      },
     );
   }
 
@@ -130,32 +145,42 @@ export default function UserManagementScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.row}
+            style={[styles.row, item.isDeleted && styles.rowDeleted]}
             onPress={() => openEditModal(item)}
           >
             <View
               style={[
                 styles.iconBox,
                 {
-                  backgroundColor:
-                    item.role === "ADMIN" ? colors.amber : colors.ink,
+                  backgroundColor: item.isDeleted
+                    ? colors.gray
+                    : item.role === "ADMIN"
+                      ? colors.amber
+                      : colors.ink,
                 },
               ]}
             >
               <Ionicons
                 name={
-                  item.role === "ADMIN"
-                    ? "shield-checkmark-outline"
-                    : "person-outline"
+                  item.isDeleted
+                    ? "person-remove-outline"
+                    : item.role === "ADMIN"
+                      ? "shield-checkmark-outline"
+                      : "person-outline"
                 }
                 size={20}
                 color={colors.paper}
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>{item.fullName || item.email}</Text>
+              <Text style={styles.rowTitle}>
+                {item.fullName || item.email}
+                {item.isDeleted ? "  ·  Deleted" : ""}
+              </Text>
               <Text style={styles.rowSub}>
-                {item.email} · {item.role} · {item.plants?.length ?? 0} plant(s)
+                {item.isDeleted
+                  ? `Removed ${new Date(item.deletedAt).toLocaleDateString()}`
+                  : `${item.email} · ${item.role} · ${item.plants?.length ?? 0} plant(s)`}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.gray} />
@@ -235,7 +260,7 @@ export default function UserManagementScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Edit modal */}
+      {/* Edit modal (active users only) */}
       <Modal visible={!!editingUser} animationType="slide" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -298,7 +323,7 @@ export default function UserManagementScreen() {
             <View style={styles.modalButtonRow}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.deleteModalButton]}
-                onPress={() => handleDelete(editingUser)}
+                onPress={() => openDeleteModal(editingUser)}
               >
                 <Text style={styles.saveButtonText}>Delete</Text>
               </TouchableOpacity>
@@ -316,6 +341,100 @@ export default function UserManagementScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Deleted-user read-only view */}
+      <Modal visible={!!viewingDeletedUser} animationType="slide" transparent>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>{viewingDeletedUser?.email}</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setViewingDeletedUser(null)}
+              >
+                <Ionicons name="close" size={22} color={colors.ink} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.deletedNotice}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={16}
+                color={colors.gray}
+              />
+              <Text style={styles.deletedNoticeText}>
+                This account has been removed and cannot be restored. Their
+                reading history and plant records remain intact for audit
+                purposes.
+              </Text>
+            </View>
+
+            <Text style={styles.label}>Removed on</Text>
+            <Text style={styles.readOnlyValue}>
+              {viewingDeletedUser?.deletedAt
+                ? new Date(viewingDeletedUser.deletedAt).toLocaleString()
+                : "—"}
+            </Text>
+
+            <Text style={styles.label}>Reason</Text>
+            <Text style={styles.readOnlyValue}>
+              {viewingDeletedUser?.deletionReason || "No reason provided"}
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete confirmation with required reason */}
+      <Modal visible={!!deleteTarget} animationType="fade" transparent>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Delete User</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setDeleteTarget(null)}
+                disabled={deleteUser.isPending}
+              >
+                <Ionicons name="close" size={22} color={colors.ink} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.warningText}>
+              {deleteTarget?.email} will lose access permanently and cannot be
+              restored. Their history stays on record.
+            </Text>
+
+            <Text style={styles.label}>Reason (required)</Text>
+            <TextInput
+              style={styles.input}
+              value={deleteReason}
+              onChangeText={setDeleteReason}
+              placeholder="e.g. No longer with the company"
+              placeholderTextColor={colors.gray}
+              autoFocus
+            />
+
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setDeleteTarget(null)}
+                disabled={deleteUser.isPending}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.deleteModalButton]}
+                onPress={confirmDelete}
+                disabled={deleteUser.isPending}
+              >
+                <Text style={styles.saveButtonText}>
+                  {deleteUser.isPending ? "Deleting…" : "Confirm Delete"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -348,6 +467,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     backgroundColor: colors.grayLight,
   },
+  rowDeleted: { opacity: 0.6 },
   iconBox: {
     width: 40,
     height: 40,
@@ -456,4 +576,25 @@ const styles = StyleSheet.create({
   saveButton: { backgroundColor: colors.moss },
   deleteModalButton: { backgroundColor: colors.amber },
   saveButtonText: { color: colors.paper, fontWeight: "700" },
+  deletedNotice: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    backgroundColor: colors.grayLight,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  deletedNoticeText: {
+    flex: 1,
+    color: colors.gray,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  readOnlyValue: { ...typography.body, marginBottom: spacing.sm },
+  warningText: {
+    ...typography.body,
+    color: colors.gray,
+    marginBottom: spacing.md,
+  },
 });

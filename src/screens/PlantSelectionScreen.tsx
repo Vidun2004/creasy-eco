@@ -105,8 +105,8 @@ const styles = StyleSheet.create({
   cardTitle: { ...typography.h2, flex: 1 },
   logoutFab: {
     position: "absolute",
-    bottom: spacing.lg,
-    right: spacing.lg,
+    bottom: spacing.xxxl,
+    left: spacing.lg,
     backgroundColor: colors.ink,
     width: 48,
     height: 48,

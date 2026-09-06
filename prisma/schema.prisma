@@ -19,11 +19,14 @@ enum Category {
 }
 
 model Profile {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  fullName  String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
+  id              String    @id @default(uuid())
+  email           String    @unique
+  fullName        String?
+  role            Role      @default(USER)
+  createdAt       DateTime  @default(now())
+  isDeleted       Boolean   @default(false)
+  deletedAt       DateTime?
+  deletionReason  String?
 
   plants   UserPlant[]
   readings Reading[]   @relation("ReadingCreatedBy")

@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   },
   qrFab: {
     position: "absolute",
-    bottom: spacing.lg,
+    bottom: spacing.xxxl,
     left: spacing.lg,
     backgroundColor: colors.moss,
     width: 48,

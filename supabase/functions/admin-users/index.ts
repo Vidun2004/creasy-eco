@@ -73,7 +73,21 @@ serve(async (req) => {
     }
 
     if (body.action === "delete") {
-      const { userId } = body;
+      const { userId, reason } = body;
+
+      // Mark deleted BEFORE removing the auth account, so the reason is
+      // guaranteed to be in place before the trigger's fallback could fire.
+      const { error: markError } = await adminClient
+        .from("Profile")
+        .update({
+          isDeleted: true,
+          deletedAt: new Date().toISOString(),
+          deletionReason: reason || "No reason provided",
+        })
+        .eq("id", userId);
+
+      if (markError) throw markError;
+
       const { error: deleteError } =
         await adminClient.auth.admin.deleteUser(userId);
       if (deleteError) throw deleteError;

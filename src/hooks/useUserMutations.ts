@@ -31,11 +31,28 @@ export function useDeleteUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async ({
+      userId,
+      reason,
+    }: {
+      userId: string;
+      reason: string;
+    }) => {
       const { data, error } = await supabase.functions.invoke("admin-users", {
-        body: { action: "delete", userId },
+        body: { action: "delete", userId, reason },
       });
-      if (error) throw error;
+
+      if (error) {
+        let detail = error.message;
+        try {
+          const body = await error.context.json();
+          if (body?.error) detail = body.error;
+        } catch {
+          // fall back to generic message
+        }
+        throw new Error(detail);
+      }
+
       if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
